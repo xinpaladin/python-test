@@ -10,24 +10,6 @@ from lists.views import home_page
 
 
 class SmokeTest(TestCase):
-
-    # def test_bad_maths(self):
-    #     self.assertEqual(1+1, 3)
-
-    def test_root_url_resolve_to_home_page_view(self):
-        found = resolve('/')
-        self.assertEqual(found.func, home_page)
-
-    # def test_home_page_returns_correct_html(self):
-    #     request = HttpRequest()
-    #     response = home_page(request)
-    #     html = response.content.decode('utf8')
-    #     # self.assertTrue(html.startswith('<html>'))
-    #     # self.assertIn('<title>To-Do lists</title>', html)
-    #     # self.assertTrue(html.endswith('</html>'))
-    #     expected_html = render_to_string('home.html')
-    #     self.assertEqual(html, expected_html)
-
     def test_django_home_page_returns_correct_html(self):
 
         response = self.client.get('/')
@@ -42,19 +24,13 @@ class SmokeTest(TestCase):
     def test_redirects_after_POST(self):
         response = self.client.post('/', data={'item_text': 'A new list item'})
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['location'], '/')
+        # self.assertEqual(response['location'], '/')
+        self.assertEqual(response['location'],
+                         '/lists/the-only-list-in-the-world/')
 
     def test_only_saves_items_when_necessary(self):
         self.client.get('/')
         self.assertEqual(Item.objects.count(), 0)
-
-    def test_displays_all_list_items(self):
-        Item.objects.create(text='itemey 1')
-        Item.objects.create(text='itemey 2')
-
-        response = self.client.get('/')
-        self.assertIn('itemey 1', response.content.decode())
-        self.assertIn('itemey 2', response.content.decode())
 
 
 class ItemModelTest(TestCase):
@@ -74,3 +50,18 @@ class ItemModelTest(TestCase):
 
         self.assertEqual('the first item', first_saved_item.text)
         self.assertEqual('the second item', second_saved_item.text)
+
+
+class ListViewTest(TestCase):
+    def test_users_list_template(self):
+        response = self.client.get('/lists/the-only-list-in-the-world/')
+        self.assertTemplateUsed(response, 'list.html')
+
+    def test_displays_all_items(self):
+        Item.objects.create(text='itemey 1')
+        Item.objects.create(text='itemey 2')
+
+        response = self.client.get('/lists/the-only-list-in-the-world/')
+
+        self.assertContains(response, 'itemey 1')
+        self.assertContains(response, 'itemey 2')
